@@ -2,6 +2,9 @@
 
 #include <vector>
 
+namespace LUSolve
+{
+
 template<class T>
 std::vector<size_t> ludecomp_internal_(std::vector<T> & a, size_t n)
 {
@@ -113,3 +116,5 @@ std::vector<T> lusolve(std::vector<std::vector<T>> const& a_, std::vector<T> con
     std::vector<size_t> ps = ludecomp_internal_(a, n);
     return std::move(lusolve_internal_(a, b, ps));
 }
+
+} // namespace LUSolve
