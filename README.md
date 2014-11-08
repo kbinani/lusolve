@@ -4,7 +4,7 @@ C++ port of ruby's `LUSolve` module, solves `A・x = b` for `x`, using LU decomp
 
 # dependency
 
-C++14 compiler.
+C++11 compiler.
 
 # usage
 
