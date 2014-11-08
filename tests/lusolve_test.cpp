@@ -49,3 +49,23 @@ TEST(LUSolve, error_by_singular_matrix)
 
     EXPECT_THROW(LUSolve::lusolve(a, b), std::runtime_error);
 }
+
+
+TEST(LUSolve, error_invalid_argument)
+{
+    std::vector<std::vector<double>> a;
+    a.resize(3);
+    std::fill_n(a.begin(), 3, std::vector<double>(2));
+
+    {
+        std::vector<double> b;
+        b.resize(4);
+        EXPECT_THROW(LUSolve::lusolve(a, b), std::runtime_error);
+    }
+
+    {
+        std::vector<double> b;
+        b.resize(3);
+        EXPECT_THROW(LUSolve::lusolve(a, b), std::runtime_error);
+    }
+}

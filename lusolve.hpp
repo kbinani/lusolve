@@ -1,48 +1,72 @@
 #pragma once
 
 #include <vector>
+#include <cmath>
 
 namespace LUSolve
 {
 
-template<class T>
-std::vector<size_t> ludecomp_internal_(std::vector<T> & a, size_t n)
+namespace detail
 {
-    T const zero = 0;
-    T const one = 1;
 
-    auto abs = [zero](T const& v) {
-        if (v < zero) {
-            return -v;
-        } else {
-            return v;
-        }
-    };
+template<class Value>
+Value abs_(Value const& v)
+{
+    if (v < 0) {
+        return -v;
+    } else {
+        return v;
+    }
+}
 
-    std::vector<size_t> ps;
-    std::vector<T> scales;
+template<>
+float abs_(float const& v)
+{
+    return std::fabs(v);
+}
+
+template<>
+double abs_(double const& v)
+{
+    return std::fabs(v);
+}
+
+template<>
+long double abs_(long double const& v)
+{
+    return std::fabs(v);
+}
+
+template<class Value, template<class> class Matrix>
+std::vector<size_t> ludecomp_(Matrix<Value> & a, size_t n)
+{
+    Value const zero = 0;
+    Value const one = 1;
+
+    std::vector<size_t> ps(n);
+    std::vector<Value> scales(n);
     for (size_t i = 0; i < n; ++i) {  // pick up largest(abs. val.) element in each row.
-        ps.push_back(i);
-        T nrmrow = zero;
+        ps[i] = i;
+        Value nrmrow = zero;
         size_t const ixn = i * n;
         for(size_t j = 0; j < n; ++j) {
-            T biggst = abs(a[ixn + j]);
+            Value biggst = abs_(a[ixn + j]);
             if (biggst > nrmrow) {
                 nrmrow = biggst;
             }
         }
         if (nrmrow > zero) {
-            scales.push_back(one / nrmrow);
+            scales[i] = one / nrmrow;
         } else {
             throw std::runtime_error("Singular matrix");
         }
     }
     size_t const n1 = n - 1;
     for (size_t k = 0; k < n1; ++k) { // Gaussian elimination with partial pivoting.
-        T biggst = zero;
+        Value biggst = zero;
         size_t pividx = 0;
         for (int i = k; i < n; ++i) {
-            T const size = abs(a[ps[i] * n + k]) * scales[ps[i]];
+            Value const size = abs_(a[ps[i] * n + k]) * scales[ps[i]];
             if (size > biggst) {
                 biggst = size;
                 pividx = i;
@@ -54,10 +78,10 @@ std::vector<size_t> ludecomp_internal_(std::vector<T> & a, size_t n)
         if (pividx != k) {
             std::swap(ps[k], ps[pividx]);
         }
-        T const pivot = a[ps[k] * n + k];
+        Value const pivot = a[ps[k] * n + k];
         for (size_t i = k + 1; i < n; ++i) {
             size_t const psin = ps[i] * n;
-            T const mult = a[psin + k] / pivot;
+            Value const mult = a[psin + k] / pivot;
             a[psin + k] = mult;
             if (mult != zero) {
                 size_t const pskn = ps[k] * n;
@@ -74,14 +98,14 @@ std::vector<size_t> ludecomp_internal_(std::vector<T> & a, size_t n)
     return ps;
 }
 
-template<class T>
-std::vector<T> lusolve_internal_(std::vector<T> const& a, std::vector<T> const& b, std::vector<size_t> const& ps)
+template<class Value, template<class> class Matrix>
+std::vector<Value> lusolve_(Matrix<Value> const& a, std::vector<Value> const& b, std::vector<size_t> const& ps)
 {
     size_t const n = ps.size();
-    std::vector<T> x;
-    T const zero = 0;
+    std::vector<Value> x;
+    Value const zero = 0;
     for (size_t i = 0; i < n; ++i) {
-        T dot = zero;
+        Value dot = zero;
         size_t const psin = ps[i] * n;
         for (size_t j = 0; j < i; ++j) {
             dot += a[psin + j] * x[j];
@@ -89,7 +113,7 @@ std::vector<T> lusolve_internal_(std::vector<T> const& a, std::vector<T> const& 
         x.push_back(b[ps[i]] - dot);
     }
     for (size_t i = n - 1; ; --i) {
-        T dot = zero;
+        Value dot = zero;
         size_t const psin = ps[i] * n;
         for (size_t j = i + 1; j < n; ++j) {
             dot += a[psin + j] * x[j];
@@ -102,19 +126,69 @@ std::vector<T> lusolve_internal_(std::vector<T> const& a, std::vector<T> const& 
     return x;
 }
 
-template<class T>
-std::vector<T> lusolve(std::vector<std::vector<T>> const& a_, std::vector<T> const& b)
+template<class Value>
+class matrix_proxy
 {
-    std::vector<T> a;
-    size_t const n = a_.size();
-    a.reserve(n * n);
-    for (auto const& s : a_) {
-        for (T const& v : s) {
-            a.push_back(v);
+public:
+    explicit matrix_proxy(std::vector<std::vector<Value>> * m)
+        : m_(m)
+        , n_(m->size())
+    {
+        for (auto const& sub : *m) {
+            if (sub.size() != n_) {
+                throw std::runtime_error("Matrix size mismatch");
+            }
         }
     }
-    std::vector<size_t> ps = ludecomp_internal_(a, n);
-    return std::move(lusolve_internal_(a, b, ps));
+
+    Value const& operator[](size_t index) const
+    {
+        return get_(index);
+    }
+
+    Value & operator[](size_t index)
+    {
+        return get_(index);
+    }
+
+private:
+    Value & get_(size_t index) const
+    {
+        size_t const i = index / n_;
+        size_t const j = index - i * n_;
+        return (*m_)[i][j];
+    }
+
+private:
+    size_t const n_;
+    std::vector<std::vector<Value>> * const m_;
+};
+
+} // namespace detail
+
+template<class Value>
+std::vector<Value> lusolve(std::vector<std::vector<Value>> & a, std::vector<Value> const& b)
+{
+    size_t const n = b.size();
+    if (a.size() != n) {
+        throw std::runtime_error("Matrix size mismatch");
+    }
+
+    detail::matrix_proxy<Value> prox(&a);
+    std::vector<size_t> ps = detail::ludecomp_(prox, n);
+    return std::move(detail::lusolve_(prox, b, ps));
+}
+
+template<class Value>
+std::vector<Value> lusolve(std::vector<Value> & a, std::vector<Value> const& b)
+{
+    size_t const n = b.size();
+    if (a.size() != n * n) {
+        throw std::runtime_error("Matrix size mismatch");
+    }
+
+    std::vector<size_t> ps = detail::ludecomp_(a, n);
+    return std::move(detail::lusolve_(a, b, ps));
 }
 
 } // namespace LUSolve

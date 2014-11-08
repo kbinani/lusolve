@@ -7,6 +7,8 @@ all: $(PROGRAMS)
 
 lusolve_test.out: $(OBJS)
 
+lusolve_test.o: lusolve_test.cpp ../lusolve.hpp
+
 gtest_main.o: gtest/src/gtest_main.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
