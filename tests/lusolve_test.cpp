@@ -5,7 +5,7 @@ TEST(LUSolve, lusolve)
 {
     int const kSize = 3;
 
-    std::vector<std::vector<double>> a;
+    std::vector<std::vector<double> > a;
     a.resize(kSize);
     std::fill_n(a.begin(), kSize, std::vector<double>(kSize));
     a[0][0] = 1;
@@ -37,7 +37,7 @@ TEST(LUSolve, error_by_singular_matrix)
 {
     int const kSize = 3;
 
-    std::vector<std::vector<double>> a;
+    std::vector<std::vector<double> > a;
     a.resize(kSize);
     std::fill_n(a.begin(), kSize, std::vector<double>(kSize));
 
@@ -53,7 +53,7 @@ TEST(LUSolve, error_by_singular_matrix)
 
 TEST(LUSolve, error_invalid_argument)
 {
-    std::vector<std::vector<double>> a;
+    std::vector<std::vector<double> > a;
     a.resize(3);
     std::fill_n(a.begin(), 3, std::vector<double>(2));
 

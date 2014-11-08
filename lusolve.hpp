@@ -130,12 +130,12 @@ template<class Value>
 class matrix_proxy
 {
 public:
-    explicit matrix_proxy(std::vector<std::vector<Value>> * m)
+    explicit matrix_proxy(std::vector<std::vector<Value> > * m)
         : m_(m)
         , n_(m->size())
     {
-        for (auto const& sub : *m) {
-            if (sub.size() != n_) {
+        for (size_t i = 0; i < m->size(); ++i) {
+            if ((*m)[i].size() != n_) {
                 throw std::runtime_error("Matrix size mismatch");
             }
         }
@@ -161,13 +161,13 @@ private:
 
 private:
     size_t const n_;
-    std::vector<std::vector<Value>> * const m_;
+    std::vector<std::vector<Value> > * const m_;
 };
 
 } // namespace detail
 
 template<class Value>
-std::vector<Value> lusolve(std::vector<std::vector<Value>> & a, std::vector<Value> const& b)
+std::vector<Value> lusolve(std::vector<std::vector<Value> > & a, std::vector<Value> const& b)
 {
     size_t const n = b.size();
     if (a.size() != n) {

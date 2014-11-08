@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++11 -stdlib=libc++ -Igtest/include -Igtest
+CXXFLAGS=-Igtest/include -Igtest
 CXX=g++
 OBJS=lusolve_test.o gtest_main.o gtest-all.o
 PROGRAMS=lusolve_test.out
