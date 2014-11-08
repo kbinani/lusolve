@@ -27,7 +27,7 @@ int main()
 
     std::vector<double> x;
     try {
-        x = lusolve(a, b);
+        x = LUSolve::lusolve(a, b);
     } catch (std::runtime_error const&) {
         // in case singular matrix
     }
